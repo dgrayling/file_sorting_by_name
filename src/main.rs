@@ -12,10 +12,17 @@ fn main() {
     let file_path = &args[1];
     println!("File path: {}", file_path); // Output the argument to the console
 
+    let read_directory = fs::read_dir(file_path);
+
+    if let Err(read_directory_error) = read_directory {
+        println!("Failed to read directory: {}", read_directory_error);
+        return;
+    }
+
     let mut file_map: HashMap<String, String> = HashMap::new(); // Create a HashMap to store file names and their absolute directories
     let mut substrings_map: HashMap<String, Vec<String>> = HashMap::new(); // Create a HashMap to store file names and their corresponding substrings
 
-    if let Ok(entries) = fs::read_dir(file_path) {
+    if let Ok(entries) = read_directory {
         for entry in entries {
             if let Ok(entry) = entry {
                 if let Some(file_name) = entry.file_name().to_str() {
@@ -27,8 +34,6 @@ fn main() {
                 }
             }
         }
-    } else {
-        println!("Failed to read directory contents");
     }
 
     for (file_name, substrings) in &substrings_map {

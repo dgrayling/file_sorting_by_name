@@ -1,6 +1,35 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::collections::HashMap;
+
+fn process_directory(file_path: &str) -> (HashMap<String, String>, HashMap<String, Vec<String>>) {
+    let mut file_map: HashMap<String, String> = HashMap::new(); // Create a HashMap to store file names and their absolute directories
+    let mut substrings_map: HashMap<String, Vec<String>> = HashMap::new(); // Create a HashMap to store file names and their corresponding substrings
+
+    let read_directory = fs::read_dir(file_path);
+
+    if let Ok(entries) = read_directory {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                if let Some(file_name) = entry.file_name().to_str() {
+                    let absolute_path = entry
+                        .path()
+                        .canonicalize()
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .to_string(); // Get the absolute path of the file
+                    file_map.insert(file_name.to_string(), absolute_path); // Insert the file name and its absolute path into the HashMap
+
+                    let substrings = generate_substrings(&file_name);
+                    substrings_map.insert(file_name.to_string(), substrings); // Insert the file name and its corresponding substrings into the HashMap
+                }
+            }
+        }
+    }
+
+    (file_map, substrings_map)
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -19,22 +48,7 @@ fn main() {
         return;
     }
 
-    let mut file_map: HashMap<String, String> = HashMap::new(); // Create a HashMap to store file names and their absolute directories
-    let mut substrings_map: HashMap<String, Vec<String>> = HashMap::new(); // Create a HashMap to store file names and their corresponding substrings
-
-    if let Ok(entries) = read_directory {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                if let Some(file_name) = entry.file_name().to_str() {
-                    let absolute_path = entry.path().canonicalize().unwrap().to_str().unwrap().to_string(); // Get the absolute path of the file
-                    file_map.insert(file_name.to_string(), absolute_path); // Insert the file name and its absolute path into the HashMap
-
-                    let substrings = generate_substrings(&file_name);
-                    substrings_map.insert(file_name.to_string(), substrings); // Insert the file name and its corresponding substrings into the HashMap
-                }
-            }
-        }
-    }
+    let (file_map, substrings_map) = process_directory(file_path);
 
     for (file_name, substrings) in &substrings_map {
         println!("File: {}", file_name);
@@ -47,7 +61,13 @@ fn main() {
         if files.len() > 1 {
             println!("\x1b[32mSubstring: {}\x1b[0m", substring);
             println!("\x1b[31mFiles: {:?}\x1b[0m", files);
-            println!("Absolute paths: {:?}", files.iter().map(|file| file_map.get(file).unwrap()).collect::<Vec<&String>>());
+            println!(
+                "Absolute paths: {:?}",
+                files
+                    .iter()
+                    .map(|file| file_map.get(file).unwrap())
+                    .collect::<Vec<&String>>()
+            );
         }
     }
 }
@@ -64,7 +84,10 @@ fn generate_substrings(s: &str) -> Vec<String> {
     substrings
 }
 
-fn generate_clusters(file_map: &HashMap<String, String>, substrings_map: &HashMap<String, Vec<String>>) -> HashMap<String, Vec<String>> {
+fn generate_clusters(
+    file_map: &HashMap<String, String>,
+    substrings_map: &HashMap<String, Vec<String>>,
+) -> HashMap<String, Vec<String>> {
     let mut clusters: HashMap<String, Vec<String>> = HashMap::new(); // Create a HashMap to store clusters of files that share substrings
     for (file_name, substrings) in substrings_map {
         for substring in substrings {
@@ -77,14 +100,3 @@ fn generate_clusters(file_map: &HashMap<String, String>, substrings_map: &HashMa
     }
     clusters
 }
-
-    
-
-
-    
-
-
-
-
-
-

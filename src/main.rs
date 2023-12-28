@@ -21,7 +21,7 @@ fn main() {
 
     let (file_map, substrings_map) = process_directory(file_path);
 
-    let clusters = generate_clusters(&file_map, &substrings_map);
+    let clusters = generate_clusters(&substrings_map);
 
     for (substring, files) in &clusters {
         if files.len() > 1 {
@@ -80,7 +80,6 @@ fn generate_substrings(s: &str) -> Vec<String> {
 }
 
 fn generate_clusters(
-    file_map: &HashMap<String, String>,
     substrings_map: &HashMap<String, Vec<String>>,
 ) -> HashMap<String, Vec<String>> {
     let mut clusters: HashMap<String, Vec<String>> = HashMap::new(); // Create a HashMap to store clusters of files that share substrings

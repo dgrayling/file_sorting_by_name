@@ -2,6 +2,42 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("Please provide a file path as the only program argument");
+        return;
+    }
+
+    let file_path = &args[1];
+    println!("File path: {}", file_path); // Output the argument to the console
+
+    let read_directory = fs::read_dir(file_path);
+
+    if let Err(read_directory_error) = read_directory {
+        println!("Failed to read directory: {}", read_directory_error);
+        return;
+    }
+
+    let (file_map, substrings_map) = process_directory(file_path);
+
+    let clusters = generate_clusters(&file_map, &substrings_map);
+
+    for (substring, files) in &clusters {
+        if files.len() > 1 {
+            println!("\x1b[32mSubstring: {}\x1b[0m", substring);
+            println!("\x1b[31mFiles: {:?}\x1b[0m", files);
+            println!(
+                "Absolute paths: {:?}",
+                files
+                    .iter()
+                    .map(|file| file_map.get(file).unwrap())
+                    .collect::<Vec<&String>>()
+            );
+        }
+    }
+}
+
 fn process_directory(file_path: &str) -> (HashMap<String, String>, HashMap<String, Vec<String>>) {
     let mut file_map: HashMap<String, String> = HashMap::new(); // Create a HashMap to store file names and their absolute directories
     let mut substrings_map: HashMap<String, Vec<String>> = HashMap::new(); // Create a HashMap to store file names and their corresponding substrings
@@ -29,47 +65,6 @@ fn process_directory(file_path: &str) -> (HashMap<String, String>, HashMap<Strin
     }
 
     (file_map, substrings_map)
-}
-
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        println!("Please provide a file path as the only program argument");
-        return;
-    }
-
-    let file_path = &args[1];
-    println!("File path: {}", file_path); // Output the argument to the console
-
-    let read_directory = fs::read_dir(file_path);
-
-    if let Err(read_directory_error) = read_directory {
-        println!("Failed to read directory: {}", read_directory_error);
-        return;
-    }
-
-    let (file_map, substrings_map) = process_directory(file_path);
-
-    for (file_name, substrings) in &substrings_map {
-        println!("File: {}", file_name);
-        println!("Substrings: {:?}", substrings);
-    }
-
-    let clusters = generate_clusters(&file_map, &substrings_map);
-
-    for (substring, files) in &clusters {
-        if files.len() > 1 {
-            println!("\x1b[32mSubstring: {}\x1b[0m", substring);
-            println!("\x1b[31mFiles: {:?}\x1b[0m", files);
-            println!(
-                "Absolute paths: {:?}",
-                files
-                    .iter()
-                    .map(|file| file_map.get(file).unwrap())
-                    .collect::<Vec<&String>>()
-            );
-        }
-    }
 }
 
 fn generate_substrings(s: &str) -> Vec<String> {
